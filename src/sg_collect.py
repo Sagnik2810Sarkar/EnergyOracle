@@ -266,7 +266,7 @@ def parse_grid(df: pd.DataFrame, monday: dt.date, cfg):
         elif col_date[c] != derived:
             warns.append(f"header date {col_date[c]} != filename-derived {derived} (header used)")
             break
-
+        
     # 6. build long -> wide
     recs = []
     for c in dcols:
@@ -293,22 +293,21 @@ def parse_grid(df: pd.DataFrame, monday: dt.date, cfg):
 
 
 def parse_file(path: Path, cfg):
-    
+
     monday = dt.datetime.strptime(path.stem, "%Y%m%d").date()
     sheets = pd.read_excel(path, sheet_name=None, header=None)
     errs = []
-    
     for name, df in sheets.items():
         try:
             wide, warns = parse_grid(df, monday, cfg)
             return wide, warns
         except ValueError as e:
             errs.append(f"sheet {name!r}: {e}")
-    
+
     raise ValueError("; ".join(errs))
 
 
-def cmd_parse(cfg, root):
+def cmd_parse(a, cfg, root):
     raw = root / cfg["raw_dir"]
     issues_path = root / cfg["issues"]
     if issues_path.exists():

@@ -21,4 +21,6 @@ refresh_weeks: 8               # always re-download the most recent N weeks (lat
 plausible_mw: [1000, 15000]    # values outside this should be flagged
 
 raw_dir: data/raw/singapore/half_hourly
+manifest: manifests/singapore_half_hourly_manifest.csv
+processed: data/processed/singapore/half_hourly.csv.gz
 issues: notes/singapore_half_hourly_issues.csv

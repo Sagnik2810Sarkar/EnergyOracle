@@ -5,8 +5,11 @@ __pycache__/
 .ipynb_checkpoints/
 
 # Raw data
-.data/
+.data/raw/
 
 # Secrets
 .env
 *.key
+
+# Miscellaneous
+.notes/
