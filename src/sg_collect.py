@@ -81,8 +81,11 @@ def append_csv(path: Path, fields, row):
 
 # download
 
+METADATA = ["monday", "url", "status", "bytes", "sha256", "retrieved_at", "note"]
+
 def cmd_download(a, cfg, root):
     raw = root / cfg["raw_dir"]
+    manifest = root / cfg["manifest"]
     today = dt.date.today()
     last_monday = today - dt.timedelta(days=today.weekday())
     start = as_date(a.start or cfg["start"])
@@ -105,25 +108,46 @@ def cmd_download(a, cfg, root):
             url = cfg["url_template"].format(year=m.year, ymd=f"{m:%Y%m%d}", ext=ext)
             status, body = fetch(s, url, cfg["retries"], cfg["timeout_seconds"])
             time.sleep(cfg["request_delay_seconds"])
+
+            now = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+            row = dict(monday=m, url=url, status=status, bytes=len(body), sha256="", retrieved_at=now, note="")
             
             if status == 404:
+                row["note"] = "not_found"
+                append_csv(manifest, METADATA, row)
                 continue
             if status != 200 or not magic_ok(ext, body):
+                row["note"] = "error_or_bad_content"
+                append_csv(manifest, METADATA, row)
                 bad = True          
                 continue
             
+            row["sha256"] = sha256(body)
             target = folder / f"{m:%Y%m%d}.{ext}"
             folder.mkdir(parents=True, exist_ok=True)
             
-            target.write_bytes(body)
-            counts["new"] += 1
-
+            if target.exists():
+                if sha256(target.read_bytes()) == row["sha256"]:
+                    row["note"] = "unchanged"
+                    counts["unchanged"] += 1
+                else:
+                    target.rename(target.with_suffix(f".{ext}.prev-{sha256(target.read_bytes())[:8]}"))
+                    target.write_bytes(body)
+                    row["note"] = "revised"
+                    counts["revised"] += 1
+            else:
+                target.write_bytes(body)
+                row["note"] = "new"
+                counts["new"] += 1
+            
+            append_csv(manifest, METADATA, row)
             found = True
             break
         if not found:
             counts["error" if bad else "missing"] += 1
     
     print("download summary:", counts)
+    print(f"manifest: {manifest}")
 
 
 # parsing
@@ -284,7 +308,7 @@ def parse_file(path: Path, cfg):
     raise ValueError("; ".join(errs))
 
 
-def cmd_parse(a, cfg, root):
+def cmd_parse(cfg, root):
     raw = root / cfg["raw_dir"]
     issues_path = root / cfg["issues"]
     if issues_path.exists():
