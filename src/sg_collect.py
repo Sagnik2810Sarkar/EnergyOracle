@@ -24,7 +24,7 @@ import yaml
 UA = "seasia-energy-collector/0.1 (contact: michstone994@gmail.com)"
 OLE_MAGIC = b"\xd0\xcf\x11\xe0"   # .xls
 ZIP_MAGIC = b"PK\x03\x04"         # .xlsx
-SERIES = ("system_demand_mw", "nem_demand_mw", "nem_forecast_mw")
+SERIES = ("system_demand_mw", "nem_forecast_mw")
 
 
 # helpers
@@ -189,8 +189,6 @@ def series_from_text(text: str):
     t = text.lower()
     if "forecast" in t:
         return "nem_forecast_mw"
-    if "nem" in t:
-        return "nem_demand_mw"
     if "system" in t:
         return "system_demand_mw"
     
@@ -239,14 +237,16 @@ def parse_grid(df: pd.DataFrame, monday: dt.date, cfg):
         col_series[c] = series_from_text(txt)
         ds = [to_date(x) for x in head.iloc[:, c] if to_date(x)]
         col_date[c] = ds[-1] if ds else None
-    if any(v is None for v in col_series.values()):
+    
+    """if any(v is None for v in col_series.values()):
         if len(dcols) % 3 == 0:
             warns.append("series names not found in header; assumed repeating system/NEM/forecast order")
             for k, c in enumerate(dcols):
                 col_series[c] = SERIES[k % 3]
         else:
-            raise ValueError(f"cannot identify series for {len(dcols)} data columns")
-    prev = None                      # merged date cells: carry the date rightwards
+            raise ValueError(f"cannot identify series for {len(dcols)} data columns")"""
+    
+    prev = None                      # merged date cells
     for c in dcols:
         if col_date[c] is None:
             col_date[c] = prev
@@ -280,11 +280,12 @@ def parse_grid(df: pd.DataFrame, monday: dt.date, cfg):
     for s in SERIES:
         if s not in wide:
             wide[s] = float("nan")
+    
     # drop days that are entirely empty (partial current week)
     day_has = wide.groupby("date")[list(SERIES)].apply(lambda g: g.notna().any().any())
     empty_days = [d for d, ok in day_has.items() if not ok]
     if empty_days:
-        warns.append(f"{len(empty_days)} empty day(s) dropped (partial week?)")
+        warns.append(f"{len(empty_days)} empty day(s) dropped")
         wide = wide[~wide["date"].isin(empty_days)]
     n_days = wide["date"].nunique()
     if n_days != cfg["days_per_file"] and not empty_days:
