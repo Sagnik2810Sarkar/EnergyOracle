@@ -1,0 +1,26 @@
+# EMA Singapore - Half-hourly System Demand Data
+# Landing page (JavaScript based):
+#   https://www.ema.gov.sg/resources/statistics/half-hourly-system-demand-data
+# Files are WEEKLY, named for the Monday that starts the week. 
+
+source: EMA Singapore half-hourly system demand
+url_template: "https://www.ema.gov.sg/content/dam/corporate/resources/statistics/half-hourly-data/{year}/{ymd}.{ext}"
+extensions: [xls, xlsx]        # tried in order in case of 404 return
+cadence: weekly_monday
+start: 2004-01-05
+
+timezone: Asia/Singapore
+periods_per_day: 48
+days_per_file: 7
+time_label_convention: period_ending   # first row 00:30 ... last row 00:00 (= 24:00 of the same day)
+
+request_delay_seconds: 1.0     # too frequent might be considered DDoS
+timeout_seconds: 60
+retries: 3
+refresh_weeks: 8               # always re-download the most recent N weeks (late revisions); changes are logged
+plausible_mw: [1000, 15000]    # values outside this should be flagged
+
+raw_dir: data/raw/singapore/half_hourly
+manifest: manifests/singapore_half_hourly_manifest.csv
+processed: data/processed/singapore/half_hourly.csv.gz
+issues: notes/singapore_half_hourly_issues.csv
