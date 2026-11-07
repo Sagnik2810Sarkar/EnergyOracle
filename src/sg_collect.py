@@ -348,7 +348,7 @@ def cmd_parse(a, cfg, root):
     out = out[cols]
     dest = root / cfg["processed"]
     dest.parent.mkdir(parents=True, exist_ok=True)
-    out.to_csv(dest, index=False, compression="gzip")
+    out.to_csv(dest, index=False, compression=None)
     
     print(f"parsed {len(files) - bad}/{len(files)} files -> {len(out):,} rows  ({dest})")
     print(f"range: {out['ts_end_singaporetime'].min()}  ->  {out['ts_end_singaporetime'].max()}")
