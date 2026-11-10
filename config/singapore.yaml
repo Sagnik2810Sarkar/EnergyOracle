@@ -18,9 +18,9 @@ request_delay_seconds: 1.0     # too frequent might be considered DDoS
 timeout_seconds: 60
 retries: 3
 refresh_weeks: 8               # always re-download the most recent N weeks (late revisions); changes are logged
-plausible_mw: [1000, 15000]    # values outside this should be flagged
+plausible_mw: [1000, 15000]    # values outside this range should be flagged
 
 raw_dir: data/raw/singapore/half_hourly
 manifest: manifests/singapore_half_hourly_manifest.csv
-processed: data/processed/singapore/half_hourly.csv.gz
+processed: data/processed/singapore/half_hourly.csv
 issues: notes/singapore_half_hourly_issues.csv
